@@ -26,55 +26,75 @@ var welcome = [
   ""
 ].join('\n');
 
-var mandatoryPlugins = [
-  { name: 'classes', version: '^1.0.0', priority: 0 },
-  { name: 'nav', version: '^1.0.2', priority: 1 },
-  { name: 'scale', version: '^1.0.1', priority: 1 },
-  { name: 'bullets', version: '^1.1.0', configValue: "'.build, .build-items > *:not(.build-items)'", priority: 1 },
-  { name: 'hash', version: '^1.0.2', priority: 1 },
-  { name: 'extern', version: '^1.0.0', configValue: "bespoke", priority: 2 },
+var plugins = [
+  { name: 'sfeirevents', version: 'rlespinasse/bespoke-theme-sfeirevents', isTheme: true, priority: 0 },
+  { name: 'classes', version: '^1.0.0', priority: 1 },
+  { name: 'scale', version: '^1.0.1', configValue: "'transform'", priority: 2 },
+  { name: 'nav', version: '^1.0.2', priority: 2 },
+  { name: 'overview', version: '^1.0.4', priority: 2 },
+  { name: 'bullets', version: '^1.1.0', onlyConfig: true, configValue: "'.build, .build-items > *:not(.build-items)'", priority: 2 },
+  { name: 'hash', version: '^1.0.2', priority: 2 },
+  { name: 'multimedia', version: '^1.1.0', priority: 2 },
+  { name: 'cursor', version: '^1.0.3', configValue: "3000", priority: 2 },
+  { name: 'extern', version: '^1.0.0', configValue: "bespoke", priority: 3 },
+  { name: 'progress', version: '^1.0.0', priority: 3 },
 ];
 
-var PUGJS = 'Pug (formerly Jade)';
-var ASCIIDOC = 'AsciiDoc (using Asciidoctor Bespoke)';
-
-var optionalPlugins = [
-  {
-    when: function (response) {
-      return response.templatingLanguage !== ASCIIDOC;
-    },
-    name: 'prism',
-    version: '^1.0.1',
-    priority: 1,
-    message: 'Will your presentation include code samples?',
-    default: true
-  },
-  {
-    name: 'multimedia',
-    version: '^1.1.0',
-    priority: 1,
-    message: 'Would you like to use multimedia (audio, video, animated GIFs or SVGs)?',
-    default: false
-  },
-];
+var SCHOOL = 'school';
 
 var questions = [
+  {
+    name: 'eventTemplate',
+    message: 'Which event template would you like to use?',
+    type: 'list',
+    choices: [SCHOOL],
+    default: SCHOOL
+  },
   {
     name: 'title',
     message: 'What is the title of your presentation?',
     default: 'Hello World'
   },
   {
-    name: 'license',
-    message: 'Which license (by identifier) do you want to apply? [see https://spdx.org/licenses]',
-    default: 'UNLICENSED'
+    when: function (response) {
+      return response.eventTemplate == SCHOOL;
+    },
+    name: 'schoolCode',
+    message: 'What is the code of your Sfeir School?',
+    default: 'HW'
   },
   {
-    name: 'templatingLanguage',
-    message: 'Which templating language would you like to use?',
+    when: function (response) {
+      return response.eventTemplate == SCHOOL;
+    },
+    name: 'schoolLevel',
+    message: 'Which level is your Sfeir School?',
     type: 'list',
-    choices: [PUGJS, ASCIIDOC, 'HTML'],
-    default: PUGJS
+    choices: ['100', '200', '300'],
+    default: '200'
+  },
+  {
+    name: 'license',
+    message: 'Which license (by identifier) do you want to apply? [see https://spdx.org/licenses]',
+    default: 'MIT'
+  },
+  {
+    name: 'useGeneratePdf',
+    message: 'Would you need to generate a PDF from your presentation?',
+    type: 'confirm',
+    default: true
+  },
+  {
+    name: 'useEnsuite',
+    message: 'Would you like to have a presenter console for your presentation?',
+    type: 'confirm',
+    default: true
+  },
+  {
+    name: 'useShowcase',
+    message: 'Would you like to have showcase slides in your presentation?',
+    type: 'confirm',
+    default: true
   },
 ];
 
@@ -107,25 +127,9 @@ module.exports = generators.Base.extend({
 
   prompting: function () {
 
-    var prompts = []
-      .concat(questions)
-      .concat(optionalPlugins.map(function (plugin) {
-        return {
-          type: 'confirm',
-          name: plugin.name,
-          message: plugin.message,
-          when: plugin.when,
-          default: 'default' in plugin ? plugin['default'] : true
-        };
-      }));
+    var prompts = questions;
 
     return this.prompt(prompts).then(function (answers) {
-
-      var plugins = []
-        .concat(mandatoryPlugins)
-        .concat(optionalPlugins.filter(function (plugin) {
-          return answers[plugin.name];
-        }));
 
       this.selectedPlugins = _.sortBy(plugins, 'priority');
 
@@ -133,35 +137,34 @@ module.exports = generators.Base.extend({
         plugin.varName = _.camelCase(plugin.name);
       });
 
-      optionalPlugins.forEach(function (plugin) {
-        var usePluginName = 'usePlugin' + _.upperFirst(_.camelCase(plugin.name));
-        this[usePluginName] = answers[plugin.name];
-      }.bind(this));
-
-      this.usePug = (answers.templatingLanguage === PUGJS);
-      this.useAsciiDoc = (answers.templatingLanguage === ASCIIDOC);
-      this.useHtml = (answers.templatingLanguage === 'HTML');
-
       this.title = answers.title;
       this.shortName = _.kebabCase(answers.title);
       this.license = answers.license;
 
+      this.eventTemplate = answers.eventTemplate;
+
+      this.isSchool = answers.eventTemplate == SCHOOL;
+      this.schoolCode = answers.schoolCode;
+      this.schoolLevel = answers.schoolLevel;
+
+      this.useGeneratePdf = answers.useGeneratePdf;
+      this.useEnsuite = answers.useEnsuite;
+      this.useShowcase = answers.useShowcase;
+      
     }.bind(this));
   },
 
   configuring: function () {
 
     this.template('README.adoc', 'README.adoc');
-    this.template('gulpfile.js', 'gulpfile.js');
+    this.template('Makefile', 'Makefile');
+    this.copy('gulpfile.js', 'gulpfile.js');
     this.copy('_gitignore', '.gitignore');
     this.copy('_editorconfig', '.editorconfig');
-
-    if (this.useAsciiDoc) {
-      this.copy('Gemfile', 'Gemfile');
-    }
+    this.copy('Gemfile', 'Gemfile');
 
     var packageSettings = {
-      name: 'presentation-' + this.shortName,
+      name: 'sfeir' + this.eventTemplate + '-' + this.shortName,
       version: '1.0.0',
       license: this.license
     };
@@ -179,15 +182,18 @@ module.exports = generators.Base.extend({
       'browserify': '^14.4.0',
       'del': '^3.0.0',
       'gh-pages': '^1.0.0',
+      "git-rev-sync": "^1.8.0",
       'gulp': '^3.9.1',
       // hold back gulp-autoprefixer as latest release requires Node 4.5
       'gulp-autoprefixer': '^3.1.1',
       'gulp-connect': '^5.0.0',
       'gulp-csso': '^3.0.0',
+      "gulp-exec": "^2.1.2",
       'gulp-plumber': '^1.1.0',
       'gulp-rename': '^1.2.2',
       'gulp-stylus': '^2.6.0',
       'gulp-uglify': '^3.0.0',
+      "gulp-uglify-es": "^0.1.3",
       'gulp-util': '^3.0.8',
       'normalizecss': '^3.0.0',
       'through': '^2.3.8',
@@ -195,16 +201,12 @@ module.exports = generators.Base.extend({
       'vinyl-source-stream': '^1.1.0',
     };
 
-    if (this.usePug) {
-      devDependencies['gulp-pug'] = '^3.0.3';
-    }
-
-    if (this.useAsciiDoc) {
-      devDependencies['gulp-exec'] = '^2.1.2';
+    if (this.useGeneratePdf) {
+      devDependencies['decktape'] = '^2.9.1';
     }
 
     this.selectedPlugins.forEach(function (plugin) {
-      devDependencies['bespoke-' + plugin.name] = plugin.version;
+      devDependencies['bespoke-' + (plugin.isTheme ? 'theme-':'') + plugin.name] = plugin.version;
     });
 
     packageSettings.devDependencies = sortedObject(devDependencies);
@@ -216,57 +218,82 @@ module.exports = generators.Base.extend({
 
   writing: function () {
 
-    if (this.usePug) {
-      this.template('src/index.pug', 'src/index.pug');
-    }
-    if (this.useAsciiDoc) {
-      this.template('src/index.adoc', 'src/index.adoc');
-    }
-    if (this.useHtml) {
-      this.template('src/index.html', 'src/index.html');
+    this.template('src/index.adoc', 'src/index.adoc');
+
+    this.copy('src/images/speakers/speaker-480x480.jpg', 'src/images/speakers/speaker-480x480.jpg');
+
+    this.copy('src/scripts/bespoke-bullets-patched.js', 'src/scripts/bespoke-bullets-patched.js');
+    this.template('src/scripts/main.js', 'src/scripts/main.js');
+
+    this.copy('src/styles/main.styl', 'src/styles/main.styl');
+    this.copy('src/styles/user.styl', 'src/styles/user.styl');
+
+    if (this.useEnsuite) {
+      this.template('src/presenter.adoc', 'src/presenter.adoc');
+      this.copy('src/scripts/ensuite-protocol-bespoke.js', 'src/scripts/ensuite-protocol-bespoke.js');
     }
 
-    this.copy('src/images/bespoke-logo.jpg', 'src/images/bespoke-logo.jpg');
-    this.template('src/scripts/main.js', 'src/scripts/main.js');
-    this.template('src/styles/base.styl', 'src/styles/base.styl');
-    this.template('src/styles/main.styl', 'src/styles/main.styl');
-    this.template('src/styles/user.styl', 'src/styles/user.styl');
+    if (this.useShowcase) {
+      this.copy('src/images/showcase/mountain.jpg', 'src/images/showcase/mountain.jpg');
+      this.copy('src/images/showcase/road.jpg', 'src/images/showcase/road.jpg');
+      this.copy('src/images/showcase/sfeir_institute.png', 'src/images/showcase/sfeir_institute.png');
+      this.copy('src/images/showcase/sfeir_school.png', 'src/images/showcase/sfeir_school.png');
+    }
   },
 
   install: function () {
-    this.installDependencies({ bower: false });
-
-    if (this.useAsciiDoc) {
-      if (!this.options['skip-install']) {
-        try {
-          console.log([
-            'I\'m also running ' +
-            chalk.yellow.bold('bundle --path=.bundle/gems') +
-            ' for you to install the required Ruby gems.',
-            'If this fails, try running the command yourself.',
-            ''
-          ].join('\n'));
-          execSync('bundle --path=.bundle/gems', { stdio: [0, 1, 2] });
-        }
-        catch (e) {
-          var warning = [
-            '',
-            chalk.red.bold('Failed to install the required Ruby gems. Try running these commands yourself:'),
-            chalk.cyan.bold('bundle version || gem install bundler'),
-            chalk.cyan.bold('bundle --path=.bundle/gems'),
-            ''
-          ].join('\n');
-          console.warn(warning);
-        }
-      }
-      else {
+    if (!this.options['skip-install']) {
+      try {
         console.log([
-          'Also run ' +
-          chalk.yellow.bold('bundle --path=.bundle/gems') +
-          ' to install the required Ruby gems.',
+          'I\'m running ' +
+          chalk.yellow.bold('yarn') +
+          ' for you to install the required Node modules.',
+          'If this fails, try running the command yourself.',
           ''
         ].join('\n'));
+        execSync('yarn', { stdio: [0, 1, 2] });
       }
+      catch (e) {
+        var warning = [
+          '',
+          chalk.red.bold('Failed to install the required Node modules. Try running these commands yourself:'),
+          chalk.cyan.bold('type yarn || npm install -g yarn'),
+          chalk.cyan.bold('yarn'),
+          ''
+        ].join('\n');
+        console.warn(warning);
+      }
+
+      try {
+        console.log([
+          'I\'m also running ' +
+          chalk.yellow.bold('bundle --path=.bundle/gems') +
+          ' for you to install the required Ruby gems.',
+          'If this fails, try running the command yourself.',
+          ''
+        ].join('\n'));
+        execSync('bundle --path=.bundle/gems', { stdio: [0, 1, 2] });
+      }
+      catch (e) {
+        var warning = [
+          '',
+          chalk.red.bold('Failed to install the required Ruby gems. Try running these commands yourself:'),
+          chalk.cyan.bold('bundle version || gem install bundler'),
+          chalk.cyan.bold('bundle --path=.bundle/gems'),
+          ''
+        ].join('\n');
+        console.warn(warning);
+      }
+    }
+    else {
+      console.log([
+        'Also run ' +
+        chalk.yellow.bold('yarn') +
+        ' to install the required Node modules and ',
+        chalk.yellow.bold('bundle --path=.bundle/gems') +
+        ' to install the required Ruby gems.',
+        ''
+      ].join('\n'));
     }
   }
 });

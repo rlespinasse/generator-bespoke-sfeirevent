@@ -1,5 +1,7 @@
 'use strict';
 
+var bespoke_theme = 'bespoke-theme-sfeirevents'
+
 var pkg = require('./package.json'),
   autoprefixer = require('gulp-autoprefixer'),
   browserify = require('browserify'),
@@ -7,22 +9,15 @@ var pkg = require('./package.json'),
   connect = require('gulp-connect'),
   csso = require('gulp-csso'),
   del = require('del'),
-<% if (useAsciiDoc) { -%>
   exec = require('gulp-exec'),
-<% } -%>
-  ghpages = require('gh-pages'),
   gulp = require('gulp'),
   gutil = require('gulp-util'),
-  path = require('path'),
   plumber = require('gulp-plumber'),
-<% if (usePug) { -%>
-  pug = require('gulp-pug'),
-<% } -%>
   rename = require('gulp-rename'),
   source = require('vinyl-source-stream'),
   stylus = require('gulp-stylus'),
   through = require('through'),
-  uglify = require('gulp-uglify'),
+  uglify = require('gulp-uglify-es').default,
   isDist = process.argv.indexOf('serve') === -1,
   // browserifyPlumber fills the role of plumber() when working with browserify
   browserifyPlumber = function(e) {
@@ -43,24 +38,18 @@ gulp.task('js', ['clean:js'], function() {
     .pipe(connect.reload());
 });
 
-gulp.task('html', ['clean:html'], function() {
-<% if (usePug) { -%>
-  return gulp.src('src/index.pug')
-    .pipe(isDist ? through() : plumber())
-    .pipe(pug({ pretty: '  ' }))
-    .pipe(rename('index.html'))
-<% } -%>
-<% if (useAsciiDoc) { -%>
+gulp.task('html', ['clean:html', 'clean:diagram-images'], function() {
   return gulp.src('src/index.adoc')
     .pipe(isDist ? through() : plumber())
-    .pipe(exec('bundle exec asciidoctor-bespoke -o - src/index.adoc', { pipeStdout: true }))
+    .pipe(exec('bundle exec asciidoctor-bespoke -r asciidoctor-diagram -o - -T ./node_modules/' + bespoke_theme + '/asciidoctor/templates src/index.adoc', { pipeStdout: true }))
     .pipe(exec.reporter({ stdout: false }))
     .pipe(rename('index.html'))
-<% } -%>
-<% if (useHtml) { -%>
-  return gulp.src('src/index.html')
-<% } -%>
     .pipe(gulp.dest('dist'))
+});
+
+gulp.task('post-html', ['html'], function() {
+  return gulp.src('src/images/diag-*')
+    .pipe(gulp.dest('dist/images'))
     .pipe(connect.reload());
 });
 
@@ -75,10 +64,15 @@ gulp.task('css', ['clean:css'], function() {
     .pipe(connect.reload());
 });
 
-gulp.task('images', ['clean:images'], function() {
+gulp.task('images', ['theme-images'], function() {
   return gulp.src('src/images/**/*')
     .pipe(gulp.dest('dist/images'))
     .pipe(connect.reload());
+});
+
+gulp.task('theme-images', ['clean:images'], function() {
+  return gulp.src('node_modules/' + bespoke_theme + '/lib/images/**/*')
+    .pipe(gulp.dest('dist/images'))
 });
 
 gulp.task('fonts', ['clean:fonts'], function() {
@@ -107,38 +101,28 @@ gulp.task('clean:images', function() {
   return del('dist/images');
 });
 
+gulp.task('clean:diagram-images', function() {
+  return del('src/images/diag-*');
+});
+
 gulp.task('clean:fonts', function() {
   return del('dist/fonts');
 });
 
 gulp.task('connect', ['build'], function() {
-  connect.server({ root: 'dist', port: process.env.PORT || 8080, livereload: true });
+  connect.server({ root: 'dist', port: process.env.PORT || 8000, livereload: false });
 });
 
 gulp.task('watch', function() {
-<% if (usePug) { -%>
-  gulp.watch('src/**/*.pug', ['html']);
-<% } -%>
-<% if (useAsciiDoc) { -%>
-  gulp.watch('src/**/*.adoc', ['html']);
-<% } -%>
-<% if (useHtml) { -%>
-  gulp.watch('src/**/*.html', ['html']);
-<% } -%>
+  gulp.watch('src/**/*.adoc', ['post-html']);
   gulp.watch('src/scripts/**/*.js', ['js']);
   gulp.watch('src/styles/**/*.styl', ['css']);
-  gulp.watch('src/images/**/*', ['images']);
+  // NOTE remove auto-generated asciidoctor diagram from watch (generated during 'post-html' task)
+  gulp.watch(['src/images/**/*', '!src/images/diag-*'], ['images']);
   gulp.watch('src/fonts/*', ['fonts']);
 });
 
-gulp.task('publish', ['clean', 'build'], function(done) {
-  ghpages.publish(path.join(__dirname, 'dist'), { logger: gutil.log }, done);
-});
-
-// old alias for publishing on gh-pages
-gulp.task('deploy', ['publish']);
-
-gulp.task('build', ['js', 'html', 'css', 'images', 'fonts']);
+gulp.task('build', ['js', 'post-html', 'css', 'images', 'fonts']);
 
 gulp.task('serve', ['connect', 'watch']);
 
