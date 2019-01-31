@@ -1,0 +1,11 @@
+= Bespoke.js 'Sfeir Event' Presentation Generator
+
+A http://yeoman.io[Yeoman] generator that scaffolds a http://markdalgleish.com/projects/bespoke.js[Bespoke.js] presentation project.
+
+WARNING
+====
+This Yeoman generator is under development.
+
+Install it with `npm install -g rlespinasse/generator-bespoke-sfeirevent`
+And use it with `yo bespoke-sfeirevent`
+===

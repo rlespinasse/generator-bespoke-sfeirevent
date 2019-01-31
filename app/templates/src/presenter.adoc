@@ -1,0 +1,20 @@
+= Presenter notes
+:icons: font
+:slide: pass:[icon:tv[]<br>]
+
+{slide}
+//tag::welcome[]
+Welcome message
+//end::welcome[]
+
+<% if (isSchool) { -%>
+{slide}
+//tag::schoolwifi[]
+All attendees can configure the wifi connection
+//end::schoolwifi[]
+
+{slide}
+//tag::schooltweet[]
+All attendees can tweet on this sfeir school
+//end::schooltweet[]
+<% } -%>

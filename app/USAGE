@@ -1,24 +1,5 @@
 Description:
-  A Yeoman generator for Bespoke.js presentations
+  A Yeoman generator for Bespoke.js 'Sfeir Event' presentations
 
 Example:
-  yo bespoke
-
-  This will create:
-    ├── .editorconfig                 : Config for editor like VIM...
-    ├── .gitignore                    : Classic gitignore
-    ├── gulpfile.js                   : Gulp build script
-    ├── package.json                  : Node dependencies
-    ├── Gemfile                       : Ruby dependencies (used in AsciiDoc-based presentations)
-    ├── README.adoc                   : "How to" documentation
-    ├── node_modules/**               : All the installed Node modules
-    └── src
-        ├── images
-        │   └── bespoke-logo.jpg      : Sample image
-        ├── index.(pug | adoc | html) : Slide content
-        ├── scripts
-        │   └── main.js               : Bespoke configuration
-        └── styles
-            ├── base.styl             : Base stylesheet
-            ├── main.styl             : Aggregate stylesheet
-            └── user.styl             : User stylesheet
+  yo bespoke-sfeirevent

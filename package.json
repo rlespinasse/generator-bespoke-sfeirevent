@@ -1,14 +1,15 @@
 {
-  "name": "generator-bespoke",
-  "version": "3.1.2-dev",
-  "description": "Create Bespoke.js presentations using Yeoman",
+  "name": "generator-bespoke-sfeirevent",
+  "version": "1.0.0",
+  "description": "Create Bespoke.js 'Sfeir Event' presentations using Yeoman",
   "keywords": [
     "yeoman-generator",
     "scaffold",
-    "presentation"
+    "presentation",
+    "sfeirevent"
   ],
-  "homepage": "https://github.com/bespokejs/generator-bespoke",
-  "bugs": "https://github.com/bespokejs/generator-bespoke/issues",
+  "homepage": "https://github.com/rlespinasse/generator-bespoke-sfeirevent",
+  "bugs": "https://github.com/rlespinasse/generator-bespoke-sfeirevent/issues",
   "authors": [
     {
       "name": "Mark Dalgleish",
@@ -21,12 +22,16 @@
     {
       "name": "Dan Allen",
       "url": "https://github.com/mojavelinux"
+    },
+    {
+      "name": "Romain Lespinasse",
+      "url": "https://github.com/rlespinasse"
     }
   ],
   "main": "app/index.js",
   "repository": {
     "type": "git",
-    "url": "https://github.com/bespokejs/generator-bespoke.git"
+    "url": "https://github.com/rlespinasse/generator-bespoke-sfeirevent.git"
   },
   "scripts": {
     "test": "mocha",
