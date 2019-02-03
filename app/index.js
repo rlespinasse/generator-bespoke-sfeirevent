@@ -40,20 +40,30 @@ var plugins = [
   { name: 'progress', version: '^1.0.0', priority: 3 },
 ];
 
-var SCHOOL = 'school';
+var SCHOOL = 'Sfeir School';
+var LUNCH = 'Sfeir Lunch';
+var SHARE = 'Ch\'feir Share';
 
 var questions = [
   {
     name: 'eventTemplate',
     message: 'Which event template would you like to use?',
     type: 'list',
-    choices: [SCHOOL],
+    choices: [SCHOOL,LUNCH,SHARE],
     default: SCHOOL
   },
   {
     name: 'title',
     message: 'What is the title of your presentation?',
-    default: 'Hello World'
+    default: 'Some Title'
+  },
+  {
+    when: function (response) {
+      return response.eventTemplate != SCHOOL;
+    },
+    name: 'subtitle',
+    message: 'What is the subtitle of your presentation?',
+    default: 'Some Subtitle'
   },
   {
     when: function (response) {
@@ -61,7 +71,7 @@ var questions = [
     },
     name: 'schoolCode',
     message: 'What is the code of your Sfeir School?',
-    default: 'HW'
+    default: 'ST'
   },
   {
     when: function (response) {
@@ -136,16 +146,26 @@ module.exports = generators.Base.extend({
       this.selectedPlugins.forEach(function (plugin) {
         plugin.varName = _.camelCase(plugin.name);
       });
-
-      this.title = answers.title;
-      this.shortName = _.kebabCase(answers.title);
-      this.license = answers.license;
-
-      this.eventTemplate = answers.eventTemplate;
-
+      
       this.isSchool = answers.eventTemplate == SCHOOL;
-      this.schoolCode = answers.schoolCode;
-      this.schoolLevel = answers.schoolLevel;
+      this.isLunch = answers.eventTemplate == LUNCH;
+      this.isShare = answers.eventTemplate == SHARE;
+      if (this.isSchool) {
+        this.schoolCode = answers.schoolCode;
+        this.schoolLevel = answers.schoolLevel;
+      }
+      
+      this.eventTemplate = answers.eventTemplate;
+      this.license = answers.license;
+      this.title = answers.title;
+
+      if (this.isSchool) {
+        this.fullTitle = this.title;
+        this.packageName = _.kebabCase(this.eventTemplate + '-' + this.title)
+      } else {
+        this.fullTitle = this.title + ': ' + answers.subtitle;
+        this.packageName = _.kebabCase(this.eventTemplate + '-' + this.title + '-' + answers.subtitle)
+      }
 
       this.useGeneratePdf = answers.useGeneratePdf;
       this.useEnsuite = answers.useEnsuite;
@@ -164,7 +184,7 @@ module.exports = generators.Base.extend({
     this.copy('Gemfile', 'Gemfile');
 
     var packageSettings = {
-      name: 'sfeir' + this.eventTemplate + '-' + this.shortName,
+      name: this.packageName,
       version: '1.0.0',
       license: this.license
     };

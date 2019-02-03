@@ -1,6 +1,9 @@
 <% if (isSchool) { -%>
 = Welcome to Sfeir School: <%= title %>
 <% } -%>
+<% if (!isSchool) { -%>
+= <%= fullTitle %>
+<% } -%>
 // ------------------------------------------------------------------------
 // GLOBAL CONFIGURATION
 :!sectids:
@@ -21,6 +24,12 @@
 // CONFIGURATION EVENT
 <% if (isSchool) { -%>
 :event: school
+<% } -%>
+<% if (isLunch) { -%>
+:event: lunch
+<% } -%>
+<% if (isShare) { -%>
+:event: share
 <% } -%>
 :title-background: bg-blue
 //:title-background: bg-red

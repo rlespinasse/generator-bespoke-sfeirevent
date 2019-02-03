@@ -1,4 +1,4 @@
-= <%= eventTemplate %> - <%= title %>
+= <%= eventTemplate %> - <%= fullTitle %>
 :uri-bespoke: http://markdalgleish.com/projects/bespoke.js
 :uri-node: https://nodejs.org
 :uri-nvm: https://github.com/creationix/nvm
